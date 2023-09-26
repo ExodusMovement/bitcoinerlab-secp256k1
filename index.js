@@ -134,7 +134,7 @@ const _privateNegate = privateKey => {
 const _pointAddScalar = (p, tweak, isCompressed) => {
   const P = necc.Point.fromHex(p);
   const t = normalizeScalar(tweak);
-  const Q = necc.Point.BASE.multiplyAndAddUnsafe(P, t, 1n);
+  const Q = necc.Point.BASE.multiplyAndAddUnsafe(P, t, BigInt(1));
   if (!Q) throw new Error('Tweaked point at infinity');
   return Q.toRawBytes(isCompressed);
 };
