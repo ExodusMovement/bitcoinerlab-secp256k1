@@ -1,6 +1,6 @@
 {
-  "name": "@bitcoinerlab/secp256k1",
-  "homepage": "https://bitcoinerlab.com/secp256k1",
+  "name": "@exodus/bitcoinerlab-secp256k1",
+  "homepage": "https://github.com/ExodusMovement/bitcoinerlab-secp256k1",
   "version": "1.0.5",
   "description": "A library for performing elliptic curve operations on the secp256k1 curve. It is designed to integrate into the BitcoinJS & BitcoinerLAB ecosystems and uses the audited noble-secp256k1 library. It is compatible with environments that do not support WASM, such as React Native.",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitcoinerlab/secp256k1.git"
+    "url": "git+https://github.com/ExodusMovement/bitcoinerlab-secp256k1.git"
   },
   "keywords": [
     "secp256k1",
@@ -28,7 +28,7 @@
   "author": "Jose-Luis Landabaso",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bitcoinerlab/secp256k1/issues"
+    "url": "https://github.com/ExodusMovement/bitcoinerlab-secp256k1/issues"
   },
   "devDependencies": {
     "@babel/node": "^7.20.7",
