@@ -18,6 +18,13 @@ import * as necc from '@noble/secp256k1';
 import { hmac } from '@noble/hashes/hmac';
 import { sha256 } from '@noble/hashes/sha256';
 
+const THROW_BAD_PRIVATE = 'Expected Private'
+const THROW_BAD_POINT = 'Expected Point'
+const THROW_BAD_TWEAK = 'Expected Tweak'
+const THROW_BAD_HASH = 'Expected Hash'
+const THROW_BAD_SIGNATURE = 'Expected Signature'
+const THROW_BAD_EXTRA_DATA = 'Expected Extra Data (32 bytes)'
+
 necc.utils.hmacSha256Sync = (key, ...msgs) =>
   hmac(sha256, key, necc.utils.concatBytes(...msgs));
 necc.utils.sha256Sync = (...msgs) => sha256(necc.utils.concatBytes(...msgs));
@@ -189,10 +196,10 @@ export function isXOnlyPoint(p) {
 
 export function xOnlyPointAddTweak(p, tweak) {
   if (!isXOnlyPoint(p)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   if (!isTweak(tweak)) {
-    throw new Error('Expected Tweak');
+    throw new Error(THROW_BAD_TWEAK);
   }
   return throwToNull(() => {
     const P = _pointAddScalar(p, tweak, true);
@@ -203,14 +210,14 @@ export function xOnlyPointAddTweak(p, tweak) {
 
 export function xOnlyPointFromPoint(p) {
   if (!isPoint(p)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   return p.slice(1, 33);
 }
 
 export function pointFromScalar(sk, compressed) {
   if (!isPrivate(sk)) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   return throwToNull(() =>
     necc.getPublicKey(sk, assumeCompression(compressed))
@@ -219,24 +226,24 @@ export function pointFromScalar(sk, compressed) {
 
 export function xOnlyPointFromScalar(d) {
   if (!isPrivate(d)) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   return xOnlyPointFromPoint(pointFromScalar(d));
 }
 
 export function pointCompress(p, compressed) {
   if (!isPoint(p)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   return necc.Point.fromHex(p).toRawBytes(assumeCompression(compressed, p));
 }
 
 export function pointMultiply(a, tweak, compressed) {
   if (!isPoint(a)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   if (!isTweak(tweak)) {
-    throw new Error('Expected Tweak');
+    throw new Error(THROW_BAD_TWEAK);
   }
   return throwToNull(() =>
     _pointMultiply(a, tweak, assumeCompression(compressed, a))
@@ -245,7 +252,7 @@ export function pointMultiply(a, tweak, compressed) {
 
 export function pointAdd(a, b, compressed) {
   if (!isPoint(a) || !isPoint(b)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   return throwToNull(() => {
     const A = necc.Point.fromHex(a);
@@ -260,10 +267,10 @@ export function pointAdd(a, b, compressed) {
 }
 export function pointAddScalar(p, tweak, compressed) {
   if (!isPoint(p)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   if (!isTweak(tweak)) {
-    throw new Error('Expected Tweak');
+    throw new Error(THROW_BAD_TWEAK);
   }
   return throwToNull(() =>
     _pointAddScalar(p, tweak, assumeCompression(compressed, p))
@@ -272,53 +279,53 @@ export function pointAddScalar(p, tweak, compressed) {
 
 export function privateAdd(d, tweak) {
   if (isPrivate(d) === false) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   if (isTweak(tweak) === false) {
-    throw new Error('Expected Tweak');
+    throw new Error(THROW_BAD_TWEAK);
   }
   return throwToNull(() => _privateAdd(d, tweak));
 }
 
 export function privateSub(d, tweak) {
   if (isPrivate(d) === false) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   if (isTweak(tweak) === false) {
-    throw new Error('Expected Tweak');
+    throw new Error(THROW_BAD_TWEAK);
   }
   return throwToNull(() => _privateSub(d, tweak));
 }
 
 export function privateNegate(d) {
   if (isPrivate(d) === false) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   return _privateNegate(d);
 }
 
 export function sign(h, d, e) {
   if (!isPrivate(d)) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   if (!isHash(h)) {
     throw new Error('Expected Scalar');
   }
   if (!isExtraData(e)) {
-    throw new Error('Expected Extra Data (32 bytes)');
+    throw new Error(THROW_BAD_EXTRA_DATA);
   }
   return necc.signSync(h, d, { der: false, extraEntropy: e });
 }
 
 export function signRecoverable(h, d, e) {
   if (!isPrivate(d)) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   if (!isHash(h)) {
     throw new Error('Expected Scalar');
   }
   if (!isExtraData(e)) {
-    throw new Error('Expected Extra Data (32 bytes)');
+    throw new Error(THROW_BAD_EXTRA_DATA);
   }
   const [signature, recoveryId] = necc.signSync(h, d, { der: false, extraEntropy: e, recovered: true });
   return { signature, recoveryId }
@@ -326,36 +333,36 @@ export function signRecoverable(h, d, e) {
 
 export function signSchnorr(h, d, e = Buffer.alloc(32, 0x00)) {
   if (!isPrivate(d)) {
-    throw new Error('Expected Private');
+    throw new Error(THROW_BAD_PRIVATE);
   }
   if (!isHash(h)) {
     throw new Error('Expected Scalar');
   }
   if (!isExtraData(e)) {
-    throw new Error('Expected Extra Data (32 bytes)');
+    throw new Error(THROW_BAD_EXTRA_DATA);
   }
   return necc.schnorr.signSync(h, d, e);
 }
 
 export function recover(h, signature, recoveryId, compressed){
   if (!isHash(h)){
-    throw new Error('Expected Hash');
+    throw new Error(THROW_BAD_HASH);
   }
 
   try {
     return necc.recoverPublicKey(h, signature, recoveryId, assumeCompression(compressed));
   } catch(e){
-    if(e.message.includes('Expected number')) throw new Error('Bad Recovery Id')
-    throw new Error('Expected Signature');
+    if(e.message === 'Expected number 0 <= n < 2^256') throw new Error('Bad Recovery Id')
+    throw new Error(THROW_BAD_SIGNATURE);
   }
 }
 
 export function verify(h, Q, signature, strict) {
   if (!isPoint(Q)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   if (!isSignature(signature)) {
-    throw new Error('Expected Signature');
+    throw new Error(THROW_BAD_SIGNATURE);
   }
   if (!isHash(h)) {
     throw new Error('Expected Scalar');
@@ -365,10 +372,10 @@ export function verify(h, Q, signature, strict) {
 
 export function verifySchnorr(h, Q, signature) {
   if (!isXOnlyPoint(Q)) {
-    throw new Error('Expected Point');
+    throw new Error(THROW_BAD_POINT);
   }
   if (!isSignature(signature)) {
-    throw new Error('Expected Signature');
+    throw new Error(THROW_BAD_SIGNATURE);
   }
   if (!isHash(h)) {
     throw new Error('Expected Scalar');
