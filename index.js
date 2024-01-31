@@ -24,6 +24,8 @@ const THROW_BAD_TWEAK = 'Expected Tweak'
 const THROW_BAD_HASH = 'Expected Hash'
 const THROW_BAD_SIGNATURE = 'Expected Signature'
 const THROW_BAD_EXTRA_DATA = 'Expected Extra Data (32 bytes)'
+const THROW_BAD_SCALAR = 'Expected Scalar'
+const THROW_BAD_RECOVERY_ID = 'Bad Recovery Id'
 
 necc.utils.hmacSha256Sync = (key, ...msgs) =>
   hmac(sha256, key, necc.utils.concatBytes(...msgs));
@@ -39,6 +41,16 @@ const BN32_N = new Uint8Array([
 ]);
 const EXTRA_DATA_SIZE = 32;
 
+const BN32_ZERO = new Uint8Array(32);
+const BN32_P_MINUS_N = new Uint8Array([
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 69, 81, 35, 25, 80, 183, 95,
+  196, 64, 45, 161, 114, 47, 201, 186, 238,
+]);
+
+function isUint8Array(value) {
+  return value instanceof Uint8Array;
+}
+
 function cmpBN32(data1, data2) {
   for (let i = 0; i < 32; ++i) {
     if (data1[i] !== data2[i]) {
@@ -47,6 +59,11 @@ function cmpBN32(data1, data2) {
   }
   return 0;
 }
+
+function isZero(x) {
+  return cmpBN32(x, BN32_ZERO) === 0;
+}
+
 
 function isTweak(tweak) {
   // Check that the tweak is a Uint8Array of the correct length
@@ -67,6 +84,18 @@ function isSignature(signature) {
     cmpBN32(signature.subarray(0, 32), BN32_N) < 0 &&
     cmpBN32(signature.subarray(32, 64), BN32_N) < 0
   );
+}
+
+function isSigrLessThanPMinusN(signature) {
+  return (
+    isUint8Array(signature) &&
+    signature.length === 64 &&
+    cmpBN32(signature.subarray(0, 32), BN32_P_MINUS_N) < 0
+  );
+}
+
+function isSignatureNonzeroRS(signature) {
+  return !(isZero(signature.subarray(0, 32)) || isZero(signature.subarray(32, 64)))
 }
 
 function isHash(h) {
@@ -309,7 +338,7 @@ export function sign(h, d, e) {
     throw new Error(THROW_BAD_PRIVATE);
   }
   if (!isHash(h)) {
-    throw new Error('Expected Scalar');
+    throw new Error(THROW_BAD_SCALAR);
   }
   if (!isExtraData(e)) {
     throw new Error(THROW_BAD_EXTRA_DATA);
@@ -322,7 +351,7 @@ export function signRecoverable(h, d, e) {
     throw new Error(THROW_BAD_PRIVATE);
   }
   if (!isHash(h)) {
-    throw new Error('Expected Scalar');
+    throw new Error(THROW_BAD_SCALAR);
   }
   if (!isExtraData(e)) {
     throw new Error(THROW_BAD_EXTRA_DATA);
@@ -336,7 +365,7 @@ export function signSchnorr(h, d, e = Buffer.alloc(32, 0x00)) {
     throw new Error(THROW_BAD_PRIVATE);
   }
   if (!isHash(h)) {
-    throw new Error('Expected Scalar');
+    throw new Error(THROW_BAD_SCALAR);
   }
   if (!isExtraData(e)) {
     throw new Error(THROW_BAD_EXTRA_DATA);
@@ -349,12 +378,19 @@ export function recover(h, signature, recoveryId, compressed){
     throw new Error(THROW_BAD_HASH);
   }
 
-  try {
-    return necc.recoverPublicKey(h, signature, recoveryId, assumeCompression(compressed));
-  } catch(e){
-    if(e.message === 'Expected number 0 <= n < 2^256') throw new Error('Bad Recovery Id')
-    throw new Error(THROW_BAD_SIGNATURE);
+  if(!isSignature(signature) || !isSignatureNonzeroRS(signature)){
+    throw new Error(THROW_BAD_SIGNATURE)
   }
+
+  if (recoveryId & 2) {
+    if (!isSigrLessThanPMinusN(signature)) throw new Error(THROW_BAD_RECOVERY_ID)
+  }
+  
+  if (!isXOnlyPoint(signature.subarray(0, 32))){
+    throw new Error(THROW_BAD_SIGNATURE)
+  }
+
+  return necc.recoverPublicKey(h, signature, recoveryId, assumeCompression(compressed));
 }
 
 export function verify(h, Q, signature, strict) {
@@ -365,7 +401,7 @@ export function verify(h, Q, signature, strict) {
     throw new Error(THROW_BAD_SIGNATURE);
   }
   if (!isHash(h)) {
-    throw new Error('Expected Scalar');
+    throw new Error(THROW_BAD_SCALAR);
   }
   return necc.verify(signature, h, Q, { strict });
 }
@@ -378,7 +414,7 @@ export function verifySchnorr(h, Q, signature) {
     throw new Error(THROW_BAD_SIGNATURE);
   }
   if (!isHash(h)) {
-    throw new Error('Expected Scalar');
+    throw new Error(THROW_BAD_SCALAR);
   }
   return necc.schnorr.verifySync(signature, h, Q);
 }
