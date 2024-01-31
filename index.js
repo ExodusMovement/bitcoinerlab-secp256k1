@@ -338,14 +338,16 @@ export function signSchnorr(h, d, e = Buffer.alloc(32, 0x00)) {
 }
 
 export function recover(h, signature, recoveryId, compressed){
-  if(!isHash(h)){
-    throw new Error('Expected Scalar');
+  if (!isHash(h)){
+    throw new Error('Expected Hash');
   }
-  if (!isSignature(signature)) {
+
+  try {
+    return necc.recoverPublicKey(h, signature, recoveryId, assumeCompression(compressed));
+  } catch(e){
+    if(e.message.includes('Expected number')) throw new Error('Bad Recovery Id')
     throw new Error('Expected Signature');
   }
-  
-  return necc.recoverPublicKey(h, signature, recoveryId, assumeCompression(compressed));
 }
 
 export function verify(h, Q, signature, strict) {
