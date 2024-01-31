@@ -320,7 +320,8 @@ export function signRecoverable(h, d, e) {
   if (!isExtraData(e)) {
     throw new Error('Expected Extra Data (32 bytes)');
   }
-  return necc.signSync(h, d, { der: false, extraEntropy: e, recovered: true });
+  const [signature, recoveryId] = necc.signSync(h, d, { der: false, extraEntropy: e, recovered: true });
+  return { signature, recoveryId }
 }
 
 export function signSchnorr(h, d, e = Buffer.alloc(32, 0x00)) {
@@ -334,6 +335,17 @@ export function signSchnorr(h, d, e = Buffer.alloc(32, 0x00)) {
     throw new Error('Expected Extra Data (32 bytes)');
   }
   return necc.schnorr.signSync(h, d, e);
+}
+
+export function recover(h, signature, recoveryId, compressed){
+  if(!isHash(h)){
+    throw new Error('Expected Scalar');
+  }
+  if (!isSignature(signature)) {
+    throw new Error('Expected Signature');
+  }
+  
+  return necc.recoverPublicKey(h, signature, recoveryId, assumeCompression(compressed));
 }
 
 export function verify(h, Q, signature, strict) {
