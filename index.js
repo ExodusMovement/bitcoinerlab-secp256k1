@@ -310,6 +310,19 @@ export function sign(h, d, e) {
   return necc.signSync(h, d, { der: false, extraEntropy: e });
 }
 
+export function signRecoverable(h, d, e) {
+  if (!isPrivate(d)) {
+    throw new Error('Expected Private');
+  }
+  if (!isHash(h)) {
+    throw new Error('Expected Scalar');
+  }
+  if (!isExtraData(e)) {
+    throw new Error('Expected Extra Data (32 bytes)');
+  }
+  return necc.signSync(h, d, { der: false, extraEntropy: e, recovered: true });
+}
+
 export function signSchnorr(h, d, e = Buffer.alloc(32, 0x00)) {
   if (!isPrivate(d)) {
     throw new Error('Expected Private');
